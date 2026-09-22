@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LSPD</title>
+<style>
+:root{
+  --bg:#0b0e14;--card:#151922;--input:#1f2430;--blue:#3b82f6;
+  --red:#dc2626;--text:#f8fafc;--muted:#94a3b8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI",Arial,sans-serif}
+.app{max-width:620px;margin:auto;padding:15px}
+.header{display:flex;align-items:center;justify-content:center;background:var(--card);border:1px solid var(--blue);padding:10px 15px;margin-bottom:10px}
+.department-name{text-align:center;font-family:Georgia,"Times New Roman",serif;font-weight:700;font-style:italic;line-height:1.25;letter-spacing:.3px}
+.department-name span{display:inline}
+.department-name .line-one,.department-name .line-two{display:block}
+.department-name .line-one{font-size:20px}
+.department-name .line-one span:first-child{color:var(--red)}
+.department-name .line-one span:last-child{color:var(--blue)}
+.department-name .line-two{font-size:13px;margin-top:3px}
+.department-name .line-two span:nth-child(1){color:var(--blue)}
+.department-name .line-two span:nth-child(2){color:var(--blue)}
+.department-name .line-two span:nth-child(3){color:var(--red)}
+.nav{display:flex;gap:5px;margin:5px 10px 10px}
+.nav button{flex:1;height:42px;border:0;color:var(--text);font-weight:700;cursor:pointer;background:var(--card)}
+.nav button.active{background:var(--blue)}
+.card{background:var(--card);border:1px solid #2d3748;padding:12px 0}
+.card h2{font-size:11px;color:var(--blue);text-align:center;margin:0 0 8px}
+.field{margin:4px 15px}
+.field label{display:block;font-size:10px;font-weight:700;margin-bottom:2px}
+input{width:100%;padding:9px;background:var(--input);border:1px solid #2d3748;color:var(--text);outline:none;text-align:right}
+.generate{width:calc(100% - 30px);margin:15px;padding:11px;border:0;background:var(--red);color:white;font-weight:700;cursor:pointer}
+.generate:hover{background:#b91c1c}
+.output-head{display:flex;justify-content:space-between;align-items:center;margin:10px 0 5px}
+.output-head span{font-size:9px;color:var(--muted);font-weight:700}
+.copy{border:0;background:var(--input);color:var(--blue);padding:7px 10px;font-weight:700;cursor:pointer}
+textarea{width:100%;height:220px;resize:vertical;background:#06080c;color:#60a5fa;border:1px solid #1e293b;padding:12px;font-family:Consolas,monospace;font-size:14px;direction:ltr;text-align:left;outline:none}
+.hidden{display:none}
+.signature{position:fixed;right:18px;bottom:10px;font-size:11px;color:var(--muted);font-style:italic}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#151922;border:1px solid var(--blue);padding:10px 16px;display:none}
+@media(max-width:500px){.app{padding:10px}.department-name .line-one{font-size:17px}.department-name .line-two{font-size:11px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="department-name">
+  <span class="line-one"><span>Oxar Police</span> <span>Department</span></span>
+  <span class="line-two"><span>MDT</span><span>/</span><span>IMPOUND</span></span>
+</div>
+</div>
+
+  <div class="nav">
+    <button id="impoundTab" class="active" onclick="switchTab('impound')">1 : IMPOUND 🚔</button>
+    <button id="mdtTab" onclick="switchTab('mdt')">2 : MDT 📋</button>
+  </div>
+
+  <div id="impound" class="card">
+    <h2>FORM: VEHICLE IMPOUND</h2>
+    <div class="field"><label>اكتب اليونت الخاص بك:</label><input id="impoundBadge"></div>
+    <div class="field"><label>الصق لوحة المركبة:</label><input id="impoundVehicle"></div>
+    <div class="field"><label>اكتب اسم صاحب المركبة:</label><input id="impoundName"></div>
+    <button class="generate" onclick="generateImpound()">GENERATE IMPOUND REPORT</button>
+  </div>
+
+  <div id="mdt" class="card hidden">
+    <h2>FORM: MDT INCIDENT REPORT</h2>
+    <div class="field"><label>اكتب نوع الحالة:</label><input id="mdtCrime"></div>
+    <div class="field"><label>اكتب يونتات المشاركين في الحالة:</label><input id="mdtUnits"></div>
+    <div class="field"><label>اكتب يونت مسؤول الحالة:</label><input id="mdtOfficial"></div>
+    <div class="field"><label>الصق اسم المجرم:</label><input id="mdtCriminal"></div>
+    <div class="field"><label>اكتب مسحوبات المجرم:</label><input id="mdtProhibited"></div>
+    <button class="generate" onclick="generateMdt()">GENERATE MDT REPORT</button>
+  </div>
+
+  <div class="output-head">
+    <span>GENERATED RECORD OUTPUT</span>
+    <button class="copy" onclick="copyOutput()">📋 Copy to Clipboard</button>
+  </div>
+  <textarea id="output" readonly></textarea>
+</div>
+<div class="signature">By amryx</div>
+<div id="toast" class="toast">Report copied to clipboard!</div>
+
+<script>
+function today(){
+  const d=new Date();
+  return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+}
+function switchTab(tab){
+  document.getElementById('impound').classList.toggle('hidden',tab!=='impound');
+  document.getElementById('mdt').classList.toggle('hidden',tab!=='mdt');
+  document.getElementById('impoundTab').classList.toggle('active',tab==='impound');
+  document.getElementById('mdtTab').classList.toggle('active',tab==='mdt');
+}
+function generateImpound(){
+  const badge=document.getElementById('impoundBadge').value;
+  const vehicle=document.getElementById('impoundVehicle').value;
+  const name=document.getElementById('impoundName').value;
+  document.getElementById('output').value =
+`DESCRIPTION 📄: مركبة مهملة
+NAME OF VEHCLE OWNER 🪪 :${name}
+PLATE NUMBER 🪪 :${vehicle}
+CASE OFFICIAL👮🏻:${badge}
+TYPE OF CONDITION💰ِ : ( Criminal offense or traffic violation ? )Traffical
+DATE 📅 :${today()}`;
+}
+function generateMdt(){
+  const crime=document.getElementById('mdtCrime').value;
+  const units=document.getElementById('mdtUnits').value;
+  const official=document.getElementById('mdtOfficial').value;
+  const criminal=document.getElementById('mdtCriminal').value;
+  const prohibited=document.getElementById('mdtProhibited').value;
+  document.getElementById('output').value =
+`DESCRIPTION 📄:${crime}
+NAME OF CRIMINAL 🪪 :${criminal}
+CASE OFFICIAL👮🏻:${official}
+PARTICIPATING UNITS 🚔 :${units}
+TYPE OF CONDITION💰ِ :جنائية
+LOCATION📍: Mission Row Police Department
+DATE 📅 : ${today()}
+PROHIBITED ITEMS🚫 :${prohibited}
+EVIDENCE🔎 (And criminal picture) :`;
+}
+async function copyOutput(){
+  const text=document.getElementById('output').value.trim();
+  if(!text)return;
+  try{
+    await navigator.clipboard.writeText(text);
+  }catch(e){
+    const t=document.getElementById('output');
+    t.select();document.execCommand('copy');t.setSelectionRange(0,0);
+  }
+  const toast=document.getElementById('toast');
+  toast.style.display='block';
+  setTimeout(()=>toast.style.display='none',1500);
+}
+</script>
+</body>
+</html>
